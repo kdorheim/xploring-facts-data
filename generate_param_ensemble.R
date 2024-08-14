@@ -5,6 +5,8 @@
 library(matilda)
 library(dplyr)
 remotes::install_github("jgcri/hector@v3.2.0")
+# TODO this should updated to the dev Matilda version or the github branch with
+# the required features.
 devtools::load_all("/Users/dorh012/Documents/Hector-WD/matilda")
 stopifnot(packageVersion("hector") == "3.2.0")
 
