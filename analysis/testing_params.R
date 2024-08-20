@@ -1,0 +1,139 @@
+# Running Hector with parameter samples from Matilda
+library(hector)
+library(ggplot2)
+library(ncdf4)
+library(tidyverse)
+
+# Set working directory
+setwd("C:/Users/done231/OneDrive - PNNL/Documents/GitHub/xploring-facts-data")
+
+# Load in parameter csv
+params_all <- read.csv("data/hector_params.csv")[1:200,]
+colnames(params_all) <- list("beta","q10_rh","npp_flux0","alpha","diff","S")
+
+# Prepare hector core
+ini_file <- system.file("input/hector_ssp585.ini",package="hector")
+core <- newcore(ini_file)
+
+# Loop through samples and parameters
+# Create empty dataframe in which we'll store outputs
+h_results <- data.frame(scenario = character(),
+                      year = double(),
+                      variable = character(),
+                      value = double(),
+                      units = character(),
+                      sample = integer())
+
+start.time <- Sys.time()
+for (sample in 1:200) {
+    for (parameter in colnames(params_all)) {
+        setvar(core, NA, parameter, params_all[[parameter]][sample], getunits(parameter))
+    }
+    reset(core)
+    run(core)
+    # Get results
+    result <- fetchvars(core, 1750:2300, list(GMST(),HEAT_FLUX()))
+    # Convert heat flux to ocean heat content
+    result[result$variable==HEAT_FLUX(),]$value <- cumsum(result[result$variable==HEAT_FLUX(),]$value)*5.10065e14*0.71*31556930
+    result[result$variable==HEAT_FLUX(),]$units <- "J"
+    result[result$variable==HEAT_FLUX(),]$variable <- "ohc"
+    result[["sample"]] <- sample
+    # Append to results df
+    h_results <- bind_rows(h_results,result)
+}
+h_results$model <- "hector"
+end.time <- Sys.time()
+total.time <- end.time-start.time
+
+h_climate <- ggplot(h_results) +
+    aes(x = year, y = value, group = sample) +
+    geom_line(color="gray",alpha=0.5) +
+    facet_wrap(~variable, scales = "free_y") +
+    scale_color_viridis_c()
+
+# Histogram
+h_results_2020 <- h_results[h_results$year==2020,]
+h_results_2050 <- h_results[h_results$year==2050,]
+h_results_2100 <- h_results[h_results$year==2100,]
+
+h_gmst_2020 <- h_results_2020[h_results_2020$variable=="gmst",]
+h_gmst_2050 <- h_results_2050[h_results_2050$variable=="gmst",]
+h_gmst_2100 <- h_results_2100[h_results_2100$variable=="gmst",]
+
+h_ohc_2020 <- h_results_2020[h_results_2020$variable=="ohc",]
+h_ohc_2050 <- h_results_2050[h_results_2050$variable=="ohc",]
+h_ohc_2100 <- h_results_2100[h_results_2100$variable=="ohc",]
+
+# GMST histograms
+h_gmst_2020_hist <- ggplot(h_gmst_2020,aes(x=value)) +
+    geom_histogram()
+
+h_gmst_2050_hist <- ggplot(h_gmst_2050,aes(x=value)) +
+    geom_histogram()
+
+h_gmst_2100_hist <- ggplot(h_gmst_2100,aes(x=value)) +
+    geom_histogram()
+
+# Ocean heat content histograms
+h_ohc_2020_hist <- ggplot(h_ohc_2020,aes(x=value)) +
+    geom_histogram()
+
+h_ohc_2050_hist <- ggplot(h_ohc_2050,aes(x=value)) +
+    geom_histogram()
+
+h_ohc_2100_hist <- ggplot(h_ohc_2100,aes(x=value)) +
+    geom_histogram()
+
+# Get FaIR climate to compare
+nc_gmst <- nc_open("C:/Users/done231/OneDrive - PNNL/Desktop/SLR_output/offline_gsat.nc")
+f_gmst <- ncvar_get(nc_gmst,"surface_temperature")
+samples <- ncvar_get(nc_gmst,"samples")
+years <- ncvar_get(nc_gmst,"years")
+nc_close(nc_gmst)
+
+nc_ohc <- nc_open("C:/Users/done231/OneDrive - PNNL/Desktop/SLR_output/offline_ohc.nc")
+f_ohc <- ncvar_get(nc_ohc,"ocean_heat_content")
+nc_close(nc_ohc)
+
+# Get values in dataframe format to work with ggplot
+colnames(f_gmst) <- samples
+colnames(f_ohc) <- samples
+df_gmst <- as.data.frame(f_gmst)
+df_ohc <- as.data.frame(f_ohc)
+df_gmst$year <- years
+df_ohc$year <- years
+
+f_gmst_long <- df_gmst %>%
+    pivot_longer(
+        cols = -year,
+        names_to = "sample",
+        values_to = "value"
+    )
+f_gmst_long$variable <- "gmst"
+f_gmst_long$model <- "fair"
+
+f_ohc_long <- df_ohc %>%
+    pivot_longer(
+        cols = -year,
+        names_to = "sample",
+        values_to = "value"
+    )
+f_ohc_long$variable <- "ohc"
+f_ohc_long$model <- "fair"
+
+# Put FaIR climate results into one dataframe and plot
+f_results <- bind_rows(f_gmst_long,f_ohc_long)
+f_results$sample <- as.integer(f_results$sample)
+all_results <- bind_rows(h_results,f_results)
+
+f_climate <- ggplot(f_results) +
+    aes(x = year, y = value, group = sample) +
+    geom_line(color="gray",alpha=0.5) +
+    facet_wrap(~variable, scales = "free_y")
+    #scale_color_viridis_c()
+
+all_climate <- ggplot(all_results) +
+    aes(x = year, y = value, color=model, group = sample) +
+    geom_line(alpha=0.5) +
+    facet_wrap(~variable, scales = "free_y")
+    #scale_color_viridis_c()
