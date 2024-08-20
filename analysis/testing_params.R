@@ -3,6 +3,8 @@ library(hector)
 library(ggplot2)
 library(ncdf4)
 library(tidyverse)
+library(grid)
+library(gridExtra)
 
 # Set working directory
 setwd("C:/Users/done231/OneDrive - PNNL/Documents/GitHub/xploring-facts-data")
@@ -47,7 +49,7 @@ total.time <- end.time-start.time
 
 h_climate <- ggplot(h_results) +
     aes(x = year, y = value, group = sample) +
-    geom_line(color="gray",alpha=0.5) +
+    geom_line(color="red",alpha=0.5) +
     facet_wrap(~variable, scales = "free_y") +
     scale_color_viridis_c()
 
@@ -66,23 +68,34 @@ h_ohc_2100 <- h_results_2100[h_results_2100$variable=="ohc",]
 
 # GMST histograms
 h_gmst_2020_hist <- ggplot(h_gmst_2020,aes(x=value)) +
-    geom_histogram()
+    geom_histogram(color="black",fill="gray") +
+    labs(title="Hector GMST Values: 2020",x="degC", y = "Count")
 
 h_gmst_2050_hist <- ggplot(h_gmst_2050,aes(x=value)) +
-    geom_histogram()
+    geom_histogram(color="black",fill="gray") +
+    labs(title="Hector GMST Values: 2050",x="degC", y = "Count")
 
 h_gmst_2100_hist <- ggplot(h_gmst_2100,aes(x=value)) +
-    geom_histogram()
+    geom_histogram(color="black",fill="gray") +
+    labs(title="Hector GMST Values: 2100",x="degC", y = "Count")
 
 # Ocean heat content histograms
 h_ohc_2020_hist <- ggplot(h_ohc_2020,aes(x=value)) +
-    geom_histogram()
+    geom_histogram(color="black",fill="gray") +
+    labs(title="Hector OHC Values: 2020",x="J", y = "Count")
 
 h_ohc_2050_hist <- ggplot(h_ohc_2050,aes(x=value)) +
-    geom_histogram()
+    geom_histogram(color="black",fill="gray") +
+    labs(title="Hector OHC Values: 2050",x="J", y = "Count")
 
 h_ohc_2100_hist <- ggplot(h_ohc_2100,aes(x=value)) +
-    geom_histogram()
+    geom_histogram(color="black",fill="gray") +
+    labs(title="Hector OHC Values: 2100",x="J", y = "Count")
+
+# Display all histograms
+grid <- grid.arrange(h_gmst_2020_hist,h_gmst_2050_hist,h_gmst_2100_hist,
+                     h_ohc_2020_hist,h_ohc_2050_hist,h_ohc_2100_hist,
+                     nrow = 2)
 
 # Get FaIR climate to compare
 nc_gmst <- nc_open("C:/Users/done231/OneDrive - PNNL/Desktop/SLR_output/offline_gsat.nc")
@@ -128,7 +141,7 @@ all_results <- bind_rows(h_results,f_results)
 
 f_climate <- ggplot(f_results) +
     aes(x = year, y = value, group = sample) +
-    geom_line(color="gray",alpha=0.5) +
+    geom_line(color="red",alpha=0.5) +
     facet_wrap(~variable, scales = "free_y")
     #scale_color_viridis_c()
 
