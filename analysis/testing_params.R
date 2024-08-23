@@ -9,27 +9,40 @@ library(gridExtra)
 # Set working directory
 setwd("C:/Users/done231/OneDrive - PNNL/Documents/GitHub/xploring-facts-data")
 
+# TO DO: get ECS from FaIR parameters (done -- need to compare)
+#        pull random scenarios, not just the first 200 (done)
+#        put plots in a google doc or slides for future meetings so we can annotate them
+
 # Load in parameter csv
-params_all <- read.csv("data/hector_params.csv")[1:200,]
+params_all <- read.csv("data/hector_params.csv")
 colnames(params_all) <- list("beta","q10_rh","npp_flux0","alpha","diff","S")
+
+# Get 200 random rows from params_all
+rand_rows <- sample.int(nrow(params_all),200) #(replace=FALSE)
+#params_200 <- params_all[rand_rows,]
+# Get 200 params that work for certain
+params_200 <- read.csv("analysis/sample_params.csv")
+rownames(params_200) <- params_200$X
+params_200$X <- NULL
 
 # Prepare hector core
 ini_file <- system.file("input/hector_ssp585.ini",package="hector")
 core <- newcore(ini_file)
 
-# Loop through samples and parameters
+# Loop through Hector runs with all 200 samples
+# PROBLEM: some samples will error out (Assertion failed: Flux and pool values may not be negative in ?)
+# Temp solution: just get a new set of random samples, since almost all run just fine. Possible to-do item: note which samples don't work
+start.time <- Sys.time()
 # Create empty dataframe in which we'll store outputs
 h_results <- data.frame(scenario = character(),
-                      year = double(),
-                      variable = character(),
-                      value = double(),
-                      units = character(),
-                      sample = integer())
-
-start.time <- Sys.time()
+                        year = double(),
+                        variable = character(),
+                        value = double(),
+                        units = character(),
+                        sample = integer())
 for (sample in 1:200) {
-    for (parameter in colnames(params_all)) {
-        setvar(core, NA, parameter, params_all[[parameter]][sample], getunits(parameter))
+    for (parameter in colnames(params_200)) {
+        setvar(core, NA, parameter, params_200[[parameter]][sample], getunits(parameter))
     }
     reset(core)
     run(core)
@@ -46,12 +59,24 @@ for (sample in 1:200) {
 h_results$model <- "hector"
 end.time <- Sys.time()
 total.time <- end.time-start.time
+# NOTE: total.time has varied widely between some runs. Some take closer to 3 minutes, others more than 10. why
+# Save one set of parameters that works for certain:
+# write.csv(params_200,"analysis/sample_params.csv")
 
-h_climate <- ggplot(h_results) +
+# Smaller set of results for quickly testing plots
+# h_test <- filter(h_results,between(sample,1,3))
+
+# Rename variables for plotting
+h_plot_results <- h_results
+h_plot_results[h_plot_results$variable=="gmst",]$variable <- "Global Mean Surface Temperature (degC)"
+h_plot_results[h_plot_results$variable=="ohc",]$variable <- "Ocean Heat Content (J)"
+
+h_climate <- ggplot(h_plot_results) +
     aes(x = year, y = value, group = sample) +
-    geom_line(color="red",alpha=0.5) +
+    geom_line(color="black",alpha=0.1) +
     facet_wrap(~variable, scales = "free_y") +
-    scale_color_viridis_c()
+    ylab(NULL) +
+    theme_bw()
 
 # Histogram
 h_results_2020 <- h_results[h_results$year==2020,]
@@ -69,33 +94,39 @@ h_ohc_2100 <- h_results_2100[h_results_2100$variable=="ohc",]
 # GMST histograms
 h_gmst_2020_hist <- ggplot(h_gmst_2020,aes(x=value)) +
     geom_histogram(color="black",fill="gray") +
-    labs(title="Hector GMST Values: 2020",x="degC", y = "Count")
+    labs(title="Hector GMST Values: 2020",x="degC", y = "Count") +
+    theme_bw()
 
 h_gmst_2050_hist <- ggplot(h_gmst_2050,aes(x=value)) +
     geom_histogram(color="black",fill="gray") +
-    labs(title="Hector GMST Values: 2050",x="degC", y = "Count")
+    labs(title="Hector GMST Values: 2050",x="degC", y = "Count") +
+    theme_bw()
 
 h_gmst_2100_hist <- ggplot(h_gmst_2100,aes(x=value)) +
     geom_histogram(color="black",fill="gray") +
-    labs(title="Hector GMST Values: 2100",x="degC", y = "Count")
+    labs(title="Hector GMST Values: 2100",x="degC", y = "Count") +
+    theme_bw()
 
 # Ocean heat content histograms
 h_ohc_2020_hist <- ggplot(h_ohc_2020,aes(x=value)) +
     geom_histogram(color="black",fill="gray") +
-    labs(title="Hector OHC Values: 2020",x="J", y = "Count")
+    labs(title="Hector OHC Values: 2020",x="J", y = "Count") +
+    theme_bw()
 
 h_ohc_2050_hist <- ggplot(h_ohc_2050,aes(x=value)) +
     geom_histogram(color="black",fill="gray") +
-    labs(title="Hector OHC Values: 2050",x="J", y = "Count")
+    labs(title="Hector OHC Values: 2050",x="J", y = "Count") +
+    theme_bw()
 
 h_ohc_2100_hist <- ggplot(h_ohc_2100,aes(x=value)) +
     geom_histogram(color="black",fill="gray") +
-    labs(title="Hector OHC Values: 2100",x="J", y = "Count")
+    labs(title="Hector OHC Values: 2100",x="J", y = "Count") +
+    theme_bw()
 
 # Display all histograms
-grid <- grid.arrange(h_gmst_2020_hist,h_gmst_2050_hist,h_gmst_2100_hist,
-                     h_ohc_2020_hist,h_ohc_2050_hist,h_ohc_2100_hist,
-                     nrow = 2)
+h_hist_grid <- grid.arrange(h_gmst_2020_hist,h_gmst_2050_hist,h_gmst_2100_hist,
+                            h_ohc_2020_hist,h_ohc_2050_hist,h_ohc_2100_hist,
+                            nrow = 2)
 
 # Get FaIR climate to compare
 nc_gmst <- nc_open("C:/Users/done231/OneDrive - PNNL/Desktop/SLR_output/offline_gsat.nc")
@@ -139,14 +170,79 @@ f_results <- bind_rows(f_gmst_long,f_ohc_long)
 f_results$sample <- as.integer(f_results$sample)
 all_results <- bind_rows(h_results,f_results)
 
-f_climate <- ggplot(f_results) +
-    aes(x = year, y = value, group = sample) +
-    geom_line(color="red",alpha=0.5) +
-    facet_wrap(~variable, scales = "free_y")
-    #scale_color_viridis_c()
+# Rename variables for plotting
+f_plot_results <- f_results
+f_plot_results[f_plot_results$variable=="gmst",]$variable <- "Global Mean Surface Temperature (degC)"
+f_plot_results[f_plot_results$variable=="ohc",]$variable <- "Ocean Heat Content (J)"
 
-all_climate <- ggplot(all_results) +
-    aes(x = year, y = value, color=model, group = sample) +
-    geom_line(alpha=0.5) +
-    facet_wrap(~variable, scales = "free_y")
-    #scale_color_viridis_c()
+f_climate <- ggplot(f_plot_results) +
+    aes(x = year, y = value, group = sample) +
+    geom_line(color="black",alpha=0.1) +
+    facet_wrap(~variable, scales = "free_y") +
+    theme_bw()
+
+# Gather F and H together
+all_plot_results <- bind_rows(h_plot_results,f_plot_results)
+all_plot_results <- filter(all_plot_results,between(year,1750,2300)) # filter to Hector's shorter range
+
+all_climate <- ggplot(all_plot_results,aes(x=year,y=value,group=interaction(sample,model),color=model)) +
+    geom_line(alpha=0.3) +
+    facet_wrap(~variable,scales="free_y") +
+    theme_bw()
+
+# Histogram comparing F and H for certain years
+all_gmst_2020 <- filter(all_results,variable=="gmst") %>% filter(year==2020)
+all_gmst_2050 <- filter(all_results,variable=="gmst") %>% filter(year==2050)
+all_gmst_2100 <- filter(all_results,variable=="gmst") %>% filter(year==2100)
+
+all_ohc_2020 <- filter(all_results,variable=="ohc") %>% filter(year==2020)
+all_ohc_2050 <- filter(all_results,variable=="ohc") %>% filter(year==2050)
+all_ohc_2100 <- filter(all_results,variable=="ohc") %>% filter(year==2100)
+
+# GMST histograms
+all_gmst_2020_hist <- ggplot(all_gmst_2020, aes(x=value, color=model, fill=model)) +
+    geom_histogram(alpha=0.2, position="identity") +
+    labs(title = "Global Mean Surface Temperature Comparison: 2020",x="degC",y="Count") +
+    theme_bw()
+all_gmst_2050_hist <- ggplot(all_gmst_2050, aes(x=value, color=model, fill=model)) +
+    geom_histogram(alpha=0.2, position="identity") +
+    labs(title = "Global Mean Surface Temperature Comparison: 2050",x="degC",y="Count") +
+    theme_bw()
+all_gmst_2100_hist <- ggplot(all_gmst_2100, aes(x=value, color=model, fill=model)) +
+    geom_histogram(alpha=0.2, position="identity") +
+    labs(title = "Global Mean Surface Temperature Comparison: 2100",x="degC",y="Count") +
+    theme_bw()
+
+# OHC histograms
+all_ohc_2020_hist <- ggplot(all_ohc_2020, aes(x=value, color=model, fill=model)) +
+    geom_histogram(alpha=0.2, position="identity") +
+    labs(title = "Global Mean Surface Temperature Comparison: 2020",x="degC",y="Count") +
+    theme_bw()
+all_ohc_2050_hist <- ggplot(all_ohc_2050, aes(x=value, color=model, fill=model)) +
+    geom_histogram(alpha=0.2, position="identity") +
+    labs(title = "Global Mean Surface Temperature Comparison: 2050",x="degC",y="Count") +
+    theme_bw()
+all_ohc_2100_hist <- ggplot(all_ohc_2100, aes(x=value, color=model, fill=model)) +
+    geom_histogram(alpha=0.2, position="identity") +
+    labs(title = "Global Mean Surface Temperature Comparison: 2100",x="degC",y="Count") +
+    theme_bw()
+
+
+# Load in FaIR parameters for comparison with Hector's
+nc_fairparam <- nc_open("analysis/fair_ar6_climate_params_v4.0.nc")
+fair_param_names <- names(nc_fairparam$var)
+f_ecs <- ncvar_get(nc_fairparam, "F2x")
+nc_close(nc_fairparam)
+
+h_ecs <- params_all$S
+
+# Put the two sets in one dataframe and plot histogram
+h_ecs_df <- data.frame(ecs=h_ecs,model="hector")
+f_ecs_df <- data.frame(ecs=f_ecs,model="fair")
+ecs_all <- bind_rows(h_ecs_df,f_ecs_df)
+
+
+ecs_hist <- ggplot(ecs_all, aes(x=ecs, color=model, fill=model)) +
+    geom_histogram(alpha=0.2, position="identity") +
+    ggtitle("Equilibrium Climate Sensitivity Parameter: Hector vs FaIR") +
+    theme_bw()
