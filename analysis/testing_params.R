@@ -19,11 +19,11 @@ colnames(params_all) <- list("beta","q10_rh","npp_flux0","alpha","diff","S")
 
 # Get 200 random rows from params_all
 rand_rows <- sample.int(nrow(params_all),200) #(replace=FALSE)
-#params_200 <- params_all[rand_rows,]
-# Get 200 params that work for certain
-params_200 <- read.csv("analysis/sample_params.csv")
-rownames(params_200) <- params_200$X
-params_200$X <- NULL
+params_200 <- params_all[rand_rows,]
+## Load in 200 params that work for certain
+#params_200 <- read.csv("analysis/sample_params.csv")
+#rownames(params_200) <- params_200$X
+#params_200$X <- NULL
 
 # Prepare hector core
 ini_file <- system.file("input/hector_ssp585.ini",package="hector")
@@ -31,7 +31,7 @@ core <- newcore(ini_file)
 
 # Loop through Hector runs with all 200 samples
 # PROBLEM: some samples will error out (Assertion failed: Flux and pool values may not be negative in ?)
-# Temp solution: just get a new set of random samples, since almost all run just fine. Possible to-do item: note which samples don't work
+# Temp solution: just get a new set of random samples, since almost all run just fine. Possible to-do item: get which exact samples don't work?
 start.time <- Sys.time()
 # Create empty dataframe in which we'll store outputs
 h_results <- data.frame(scenario = character(),
@@ -216,16 +216,20 @@ all_gmst_2100_hist <- ggplot(all_gmst_2100, aes(x=value, color=model, fill=model
 # OHC histograms
 all_ohc_2020_hist <- ggplot(all_ohc_2020, aes(x=value, color=model, fill=model)) +
     geom_histogram(alpha=0.2, position="identity") +
-    labs(title = "Global Mean Surface Temperature Comparison: 2020",x="degC",y="Count") +
+    labs(title = "Ocean Heat Content Comparison: 2020",x="degC",y="Count") +
     theme_bw()
 all_ohc_2050_hist <- ggplot(all_ohc_2050, aes(x=value, color=model, fill=model)) +
     geom_histogram(alpha=0.2, position="identity") +
-    labs(title = "Global Mean Surface Temperature Comparison: 2050",x="degC",y="Count") +
+    labs(title = "Ocean Heat Content Comparison: 2050",x="degC",y="Count") +
     theme_bw()
 all_ohc_2100_hist <- ggplot(all_ohc_2100, aes(x=value, color=model, fill=model)) +
     geom_histogram(alpha=0.2, position="identity") +
-    labs(title = "Global Mean Surface Temperature Comparison: 2100",x="degC",y="Count") +
+    labs(title = "Ocean Heat Content Comparison: 2100",x="degC",y="Count") +
     theme_bw()
+
+comparison_hist_grid <- grid.arrange(all_gmst_2020_hist,all_gmst_2050_hist,all_gmst_2100_hist,
+                                     all_ohc_2020_hist,all_ohc_2050_hist,all_ohc_2100_hist,
+                                     nrow = 2)
 
 
 # Load in FaIR parameters for comparison with Hector's
