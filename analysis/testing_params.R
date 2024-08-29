@@ -60,8 +60,6 @@ h_results$model <- "hector"
 end.time <- Sys.time()
 total.time <- end.time-start.time
 # NOTE: total.time has varied widely between some runs. Some take closer to 3 minutes, others more than 10. why
-# Save one set of parameters that works for certain:
-# write.csv(params_200,"analysis/sample_params.csv")
 
 # Smaller set of results for quickly testing plots
 # h_test <- filter(h_results,between(sample,1,3))
