@@ -42,8 +42,14 @@ cut_off <- 0.00020
 to_keep <- which(scores$weights >= cut_off)
 
 final_params <- param_values[to_keep, ]
+final_params <- cbind("simulation" = 1:nrow(final_params), final_params)
 
 # 2. Save Results  -------------------------------------------------------------
 
 write.csv(final_params, file = file.path(DATADIR, "hector_params.csv"),
           row.names = FALSE)
+
+# Need to change the working directory in order to do the file compression that
+# is needed for the FACTS framework.
+setwd(DATADIR)
+system(paste("tar -czf", "hector_params.tgz", "hector_params.csv"))
