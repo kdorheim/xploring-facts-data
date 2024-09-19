@@ -1,0 +1,59 @@
+---
+title: "Comparing FACTS Outputs"
+author: "Ciara Donegan"
+date: "2024-09-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = file.path("data","outputs","fair_results"))
+library(tidyverse)
+library(ggplot2)
+library(ncdf4)
+```
+
+## FACTS Outputs
+
+This document compares the outputs of various FACTS experiments, with the original climate input from the FaIR simple climate model and with added input from Hector *(to be added)*.
+
+```{r coupling.ssp585, echo=FALSE}
+# coupling.ssp585 output with FaIR data -- total sea level rise, workflow wf1f
+nc_fslr <- nc_open(file.path("coupling.ssp585","coupling.ssp585.total.workflow.wf1f.global.nc"))
+f_slr <- ncvar_get(nc_fslr,"sea_level_change")
+f_years <- ncvar_get(nc_fslr,"years")
+f_samples <- ncvar_get(nc_fslr,"samples")
+nc_close(nc_fslr)
+
+# Convert from wide dataframe format to long
+colnames(f_slr) <- f_samples
+f_slr_df <- as.data.frame(f_slr)
+f_slr_df$year <- f_years
+
+f_slr_long <- f_slr_df %>%
+    pivot_longer(
+        cols = -year,
+        names_to = "sample",
+        values_to = "value"
+    )
+
+# Get max, min, and mean value at each date
+f_slr_stats <- f_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+
+```
+
+```{r fig.cap = 'The coupling.ssp585 experiment, plotted with 2000 climate input samples from FaIR. This is the total sea level change output as calculated by workflow w1f1.', echo=FALSE}
+# Plot experiment output
+ggplot() +
+    geom_ribbon(data = f_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="gray", alpha=0.5) +
+    geom_line(data = f_slr_stats, aes(x=year,y=mean)) +
+    labs(title = "coupling.ssp585 experiment: total sea level change from workflow w1f1",
+         x = "Year",
+         y = "Sea Level Change (mm)") +
+    theme_minimal()
+```
