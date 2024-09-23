@@ -6,22 +6,15 @@ library(tidyverse)
 library(grid)
 library(gridExtra)
 
-# Set working directory
-setwd("C:/Users/done231/OneDrive - PNNL/Documents/GitHub/xploring-facts-data")
-
-# TO DO: get ECS from FaIR parameters (done -- need to compare)
-#        pull random scenarios, not just the first 200 (done)
-#        put plots in a google doc or slides for future meetings so we can annotate them
-
 # Load in parameter csv
-params_all <- read.csv("data/hector_params.csv")
+params_all <- read.csv(file.path("data","hector_params.csv"))
 colnames(params_all) <- list("beta","q10_rh","npp_flux0","alpha","diff","S")
 
 # Get 200 random rows from params_all
 rand_rows <- sample.int(nrow(params_all),200) #(replace=FALSE)
 params_200 <- params_all[rand_rows,]
 ## Load in 200 params that work for certain
-#params_200 <- read.csv("analysis/sample_params.csv")
+#params_200 <- read.csv(file.path("analysis","sample_params.csv"))
 #rownames(params_200) <- params_200$X
 #params_200$X <- NULL
 
@@ -59,10 +52,6 @@ for (sample in 1:200) {
 h_results$model <- "hector"
 end.time <- Sys.time()
 total.time <- end.time-start.time
-# NOTE: total.time has varied widely between some runs. Some take closer to 3 minutes, others more than 10. why
-
-# Smaller set of results for quickly testing plots
-# h_test <- filter(h_results,between(sample,1,3))
 
 # Rename variables for plotting
 h_plot_results <- h_results
@@ -127,13 +116,13 @@ h_hist_grid <- grid.arrange(h_gmst_2020_hist,h_gmst_2050_hist,h_gmst_2100_hist,
                             nrow = 2)
 
 # Get FaIR climate to compare
-nc_gmst <- nc_open("C:/Users/done231/OneDrive - PNNL/Desktop/SLR_output/offline_gsat.nc")
+nc_gmst <- nc_open(file.path("data","OUTPUTS","fair_results","tlm.offline","offline_gsat.nc"))
 f_gmst <- ncvar_get(nc_gmst,"surface_temperature")
 samples <- ncvar_get(nc_gmst,"samples")
 years <- ncvar_get(nc_gmst,"years")
 nc_close(nc_gmst)
 
-nc_ohc <- nc_open("C:/Users/done231/OneDrive - PNNL/Desktop/SLR_output/offline_ohc.nc")
+nc_ohc <- nc_open(file.path("data","OUTPUTS","fair_results","tlm.offline","offline_ohc.nc"))
 f_ohc <- ncvar_get(nc_ohc,"ocean_heat_content")
 nc_close(nc_ohc)
 
@@ -231,7 +220,7 @@ comparison_hist_grid <- grid.arrange(all_gmst_2020_hist,all_gmst_2050_hist,all_g
 
 
 # Load in FaIR parameters for comparison with Hector's
-nc_fairparam <- nc_open("analysis/fair_ar6_climate_params_v4.0.nc")
+nc_fairparam <- nc_open(file.path("analysis","fair_ar6_climate_params_v4.0.nc"))
 fair_param_names <- names(nc_fairparam$var)
 f_ecs <- ncvar_get(nc_fairparam, "F2x")
 nc_close(nc_fairparam)
