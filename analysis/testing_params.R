@@ -114,6 +114,10 @@ h_ohc_2100_hist <- ggplot(h_ohc_2100,aes(x=value)) +
 h_hist_grid <- grid.arrange(h_gmst_2020_hist,h_gmst_2050_hist,h_gmst_2100_hist,
                             h_ohc_2020_hist,h_ohc_2050_hist,h_ohc_2100_hist,
                             nrow = 2)
+# Print histogram grid as pdf
+pdf(file.path("analysis","plots","hector_climate_histograms.pdf"), height = 11, width = 8.5, paper = "letter")
+grid.draw(h_hist_grid)
+dev.off()
 
 # Get FaIR climate to compare
 nc_gmst <- nc_open(file.path("data","OUTPUTS","fair_results","tlm.offline","offline_gsat.nc"))
@@ -176,6 +180,7 @@ all_climate <- ggplot(all_plot_results,aes(x=year,y=value,group=interaction(samp
     geom_line(alpha=0.3) +
     facet_wrap(~variable,scales="free_y") +
     theme_bw()
+ggsave(file.path("analysis","plots","hector_v_fair.png"))
 
 # Histogram comparing F and H for certain years
 all_gmst_2020 <- filter(all_results,variable=="gmst") %>% filter(year==2020)
@@ -217,6 +222,10 @@ all_ohc_2100_hist <- ggplot(all_ohc_2100, aes(x=value, color=model, fill=model))
 comparison_hist_grid <- grid.arrange(all_gmst_2020_hist,all_gmst_2050_hist,all_gmst_2100_hist,
                                      all_ohc_2020_hist,all_ohc_2050_hist,all_ohc_2100_hist,
                                      nrow = 2)
+# Print histogram grid as pdf
+pdf(file.path("analysis","plots","comparison_climate_histograms.pdf"), height = 11, width = 8.5, paper = "letter")
+grid.draw(comparison_hist_grid)
+dev.off()
 
 
 # Load in FaIR parameters for comparison with Hector's
@@ -237,3 +246,4 @@ ecs_hist <- ggplot(ecs_all, aes(x=ecs, color=model, fill=model)) +
     geom_histogram(alpha=0.2, position="identity") +
     ggtitle("Equilibrium Climate Sensitivity Parameter: Hector vs FaIR") +
     theme_bw()
+ggsave(file.path("analysis","plots","ecs_histogram.png"))
