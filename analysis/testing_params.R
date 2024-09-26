@@ -33,6 +33,7 @@ h_results <- data.frame(scenario = character(),
                         value = double(),
                         units = character(),
                         sample = integer())
+# TODO (in general throughout code): switch for loops for lapply/similar functions?
 for (sample in 1:200) {
     for (parameter in colnames(params_200)) {
         setvar(core, NA, parameter, params_200[[parameter]][sample], getunits(parameter))
