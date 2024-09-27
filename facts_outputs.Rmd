@@ -66,7 +66,75 @@ ggplot() +
     theme_minimal()
 ```
 
-```{r hector/fair tlm.global comparison, echo=FALSE}
+```{r fittedismip.ssp585, echo=FALSE}
+# hector fittedismip.ssp585 output -- total sea level rise
+hector.fittedismip.ssp585 <- file.path("hector_results","fittedismip.ssp585","fittedismip.ssp585.GrIS1f.FittedISMIP.GrIS_GIS_globalsl.nc")
+h_slr_long <- extract_slr(hector.fittedismip.ssp585)
+
+# Get max, min, and mean value at each date
+h_slr_stats <- h_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+
+# fittedismip.ssp585 output with FaIR data -- total sea level rise
+fittedismip.ssp585.path <- file.path("fair_results","fittedismip.ssp585","2000.samp","fittedismip.ssp585.GrIS1f.FittedISMIP.GrIS_GIS_globalsl.nc")
+f_slr_long <- extract_slr(fittedismip.ssp585.path)
+
+# Get max, min, and mean value at each date
+f_slr_stats <- f_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+
+```
+
+```{r fig.cap = 'Figure 2. The fittedismip.ssp585 experiment, plotted with 2000 climate input samples from FaIR and Hector. (experiment description).', echo=FALSE}
+# Plot experiment output
+ggplot() +
+    geom_ribbon(data = h_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="#00BFC4", fill="#00BFC4",linetype=0,alpha=0.2) +
+    geom_line(data = h_slr_stats, aes(x=year,y=mean,color="Hector")) +
+    geom_ribbon(data = f_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="#F8766D", fill="#F8766D",linetype=0,alpha=0.2) +
+    geom_line(data = f_slr_stats, aes(x=year,y=mean, color="FaIR")) +
+    labs(title = "fittedismip.ssp585 experiment: total sea level change",
+         x = "Year",
+         y = "Sea Level Change (mm)",
+         color = "Model") +
+    scale_color_manual(values=c("#F8766D","#00BFC4")) +
+    theme_minimal()
+```
+
+```{r larmip.ipccar6.ssp585, echo=FALSE}
+# larmip.ipccar6.ssp585 output with FaIR data -- total sea level rise
+larmip.ipccar6.ssp585.path <- file.path("fair_results","larmip.ipccar6.ssp585","larmip.ipccar6.ssp585.larmip.larmip.AIS_globalsl.nc")
+f_slr_long <- extract_slr(larmip.ipccar6.ssp585.path)
+
+# Get max, min, and mean value at each date
+f_slr_stats <- f_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+
+```
+
+```{r fig.cap = 'Figure 3. The larmip.ipccar6.ssp585 experiment. This experiment does not use SCM input from FaIR.', echo=FALSE}
+# Plot experiment output
+ggplot() +
+    geom_ribbon(data = f_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="#F8766D", fill="#F8766D",linetype=0,alpha=0.2) +
+    geom_line(data = f_slr_stats, aes(x=year,y=mean), color="#F8766D") +
+    labs(title = "larmip.ipccar6.ssp585 experiment: total sea level change",
+         x = "Year",
+         y = "Sea Level Change (mm)") +
+    theme_minimal()
+```
+
+```{r tlm.global, echo=FALSE}
 # hector.tlm.global output -- total sea level rise
 hector.tlm.global.path <- file.path("hector_results","hector.tlm.global","hector.tlm.global.ocean.tlm.sterodynamics_globalsl.nc")
 h_slr_long <- extract_slr(hector.tlm.global.path)
@@ -91,7 +159,7 @@ f_slr_stats <- f_slr_long %>%
 
 ```
 
-```{r fig.cap = 'Figure 2. The tlm.global experiment, plotted with 2000 climate input samples from both FaIR and Hector.', echo=FALSE}
+```{r fig.cap = 'Figure 4. The tlm.global experiment, plotted with 2000 climate input samples from both FaIR and Hector.', echo=FALSE}
 # Plot experiment output
 ggplot() +
     geom_ribbon(data = h_slr_stats,
