@@ -38,7 +38,7 @@ extract_slr <- function(filepath) {
 
 ## FACTS Outputs
 
-This document compares the outputs of various FACTS experiments, with the original climate input from the FaIR simple climate model and with added input from Hector *(to be added)*.
+This document compares the outputs of various FACTS experiments, with the original climate input from the FaIR simple climate model and with added input from Hector.
 
 ```{r coupling.ssp585, echo=FALSE}
 # coupling.ssp585 output with FaIR data -- total sea level rise, workflow wf1f
