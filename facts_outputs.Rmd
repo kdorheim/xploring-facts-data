@@ -54,7 +54,7 @@ f_slr_stats <- f_slr_long %>%
 
 ```
 
-```{r fig.cap = 'Figure 1. The coupling.ssp585 experiment, plotted with 2000 climate input samples from FaIR. This is the total sea level change output as calculated by workflow w1f1.', echo=FALSE}
+```{r fig.cap = 'Figure 1. The coupling.ssp585 experiment, plotted with 2000 climate input samples from FaIR. The experiment uses every available module to simulate sea level rise, and uses seven different workflows to obtain different estimates of the totaled rise from each module. This is the total sea level change output as calculated by workflow w1f1.', echo=FALSE}
 # Plot experiment output
 ggplot() +
     geom_ribbon(data = f_slr_stats,
@@ -91,7 +91,7 @@ f_slr_stats <- f_slr_long %>%
 
 ```
 
-```{r fig.cap = 'Figure 2. The fittedismip.ssp585 experiment, plotted with 2000 climate input samples from FaIR and Hector. (experiment description).', echo=FALSE}
+```{r fig.cap = 'Figure 2. The fittedismip.ssp585 experiment, plotted with 2000 climate input samples from FaIR and Hector. The experiment emulates 21 models that participated in ISMIP6, projecting each of their contributions to global sea level rise.', echo=FALSE}
 # Plot experiment output
 ggplot() +
     geom_ribbon(data = h_slr_stats,
@@ -122,7 +122,7 @@ f_slr_stats <- f_slr_long %>%
 
 ```
 
-```{r fig.cap = 'Figure 3. The larmip.ipccar6.ssp585 experiment. This experiment does not use SCM input from FaIR.', echo=FALSE}
+```{r fig.cap = 'Figure 3. The larmip.ipccar6.ssp585 experiment. This experiment does not use SCM input from FaIR (or Hector) and is adapted from Levermann et al. (2020). It simulates Antarctic Ice Sheet melt.', echo=FALSE}
 # Plot experiment output
 ggplot() +
     geom_ribbon(data = f_slr_stats,
@@ -159,7 +159,7 @@ f_slr_stats <- f_slr_long %>%
 
 ```
 
-```{r fig.cap = 'Figure 4. The tlm.global experiment, plotted with 2000 climate input samples from both FaIR and Hector.', echo=FALSE}
+```{r fig.cap = 'Figure 4. The tlm.global experiment, plotted with 2000 climate input samples from both FaIR and Hector. The experiment simulates thermosteric sea level rise by using a two-layer model of the forcing-temperature coupling.', echo=FALSE}
 # Plot experiment output
 ggplot() +
     geom_ribbon(data = h_slr_stats,
