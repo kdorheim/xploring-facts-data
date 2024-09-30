@@ -7,7 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir = file.path("data","outputs"))
+knitr::opts_knit$set(root.dir = file.path("data","OUTPUTS"))
 library(tidyverse)
 library(ggplot2)
 library(ncdf4)
@@ -41,9 +41,20 @@ extract_slr <- function(filepath) {
 This document compares the outputs of various FACTS experiments, with the original climate input from the FaIR simple climate model and with added input from Hector.
 
 ```{r coupling.ssp585, echo=FALSE}
-# coupling.ssp585 output with FaIR data -- total sea level rise, workflow wf1f
-coupling.ssp585.path <- file.path("fair_results","coupling.ssp585","coupling.ssp585.total.workflow.wf1f.global.nc")
-f_slr_long <- extract_slr(coupling.ssp585.path)
+# hector coupling.ssp585 output -- total sea level rise, workflow wf1f
+hector.coupling.ssp585.path <- file.path("hector_results","coupling.ssp585","coupling.ssp585.total.workflow.wf1f.global.nc")
+h_slr_long <- extract_slr(hector.coupling.ssp585.path)
+
+# Get max, min, and mean value at each date
+h_slr_stats <- h_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+
+# fair coupling.ssp585 output -- total sea level rise, workflow wf1f
+fair.coupling.ssp585.path <- file.path("fair_results","coupling.ssp585","coupling.ssp585.total.workflow.wf1f.global.nc")
+f_slr_long <- extract_slr(fair.coupling.ssp585.path)
 
 # Get max, min, and mean value at each date
 f_slr_stats <- f_slr_long %>%
@@ -51,18 +62,22 @@ f_slr_stats <- f_slr_long %>%
     summarize(max = max(value),
               min = min(value),
               mean = mean(value))
-
 ```
 
-```{r fig.cap = 'Figure 1. The coupling.ssp585 experiment, plotted with 2000 climate input samples from FaIR. The experiment uses every available module to simulate sea level rise, and uses seven different workflows to obtain different estimates of the totaled rise from each module. This is the total sea level change output as calculated by workflow w1f1.', echo=FALSE}
+```{r fig.cap = 'Figure 1. The coupling.ssp585 experiment, plotted with 2000 climate input samples from FaIR. The experiment uses every available module to simulate sea level rise, and uses seven different workflows to obtain different estimates of the totaled rise from each module. This is the global sea level change output as calculated by workflow w1f1, which uses the FittedISMIP/GrIS, larmip/AIS, ipccar5/glaciers, tlm/sterodynamics, and ssp/landwaterstorage modules.', echo=FALSE}
 # Plot experiment output
 ggplot() +
+    geom_ribbon(data = h_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="#00BFC4", fill="#00BFC4",linetype=0,alpha=0.2) +
+    geom_line(data = h_slr_stats, aes(x=year,y=mean,color="Hector")) +
     geom_ribbon(data = f_slr_stats,
                 aes(x=year, ymin=min, ymax=max), color="#F8766D", fill="#F8766D",linetype=0,alpha=0.2) +
-    geom_line(data = f_slr_stats, aes(x=year,y=mean), color="#F8766D") +
+    geom_line(data = f_slr_stats, aes(x=year,y=mean, color="FaIR")) +
     labs(title = "coupling.ssp585 experiment: total sea level change from workflow w1f1",
          x = "Year",
-         y = "Sea Level Change (mm)") +
+         y = "Sea Level Change (mm)",
+         color = "Model") +
+    scale_color_manual(values=c("#F8766D","#00BFC4")) +
     theme_minimal()
 ```
 
@@ -91,7 +106,7 @@ f_slr_stats <- f_slr_long %>%
 
 ```
 
-```{r fig.cap = 'Figure 2. The fittedismip.ssp585 experiment, plotted with 2000 climate input samples from FaIR and Hector. The experiment emulates 21 models that participated in ISMIP6, projecting each of their contributions to global sea level rise.', echo=FALSE}
+```{r fig.cap = 'Figure 2. The fittedismip.ssp585 experiment, plotted with 2000 climate input samples from FaIR and Hector. The experiment emulates 21 models that participated in ISMIP6, projecting each of their contributions to global sea level rise. While the means of the results from the two models are similar, the results using FaIR range much higher than those from Hector.', echo=FALSE}
 # Plot experiment output
 ggplot() +
     geom_ribbon(data = h_slr_stats,
@@ -159,7 +174,7 @@ f_slr_stats <- f_slr_long %>%
 
 ```
 
-```{r fig.cap = 'Figure 4. The tlm.global experiment, plotted with 2000 climate input samples from both FaIR and Hector. The experiment simulates thermosteric sea level rise by using a two-layer model of the forcing-temperature coupling.', echo=FALSE}
+```{r fig.cap = 'Figure 4. The tlm.global experiment, plotted with 2000 climate input samples from both FaIR and Hector. The experiment simulates thermosteric sea level rise (sea level change due to temperature change) by using a two-layer model of the forcing-temperature coupling. Using the tlm/sterodynamics module alone to estimate sea level rise, Hector predicts a range of values that is slightly greater than the results using FaIR input.', echo=FALSE}
 # Plot experiment output
 ggplot() +
     geom_ribbon(data = h_slr_stats,
