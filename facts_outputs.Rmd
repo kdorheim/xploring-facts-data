@@ -64,7 +64,7 @@ f_slr_stats <- f_slr_long %>%
               mean = mean(value))
 ```
 
-```{r fig.cap = 'Figure 1. The coupling.ssp585 experiment, plotted with 2000 climate input samples from FaIR. The experiment uses every available module to simulate sea level rise, and uses seven different workflows to obtain different estimates of the totaled rise from each module. This is the global sea level change output as calculated by workflow w1f1, which uses the FittedISMIP/GrIS, larmip/AIS, ipccar5/glaciers, tlm/sterodynamics, and ssp/landwaterstorage modules.', echo=FALSE}
+```{r fig.cap = 'Figure 1. The coupling.ssp585 experiment, plotted with 2000 climate input samples from FaIR. The experiment uses every available module to simulate sea level rise, and uses seven different workflows to obtain different estimates of the totaled rise from each module. This is the global sea level change output as calculated by workflow w1f1, which uses the FittedISMIP/GrIS, larmip/AIS, ipccar5/glaciers, tlm/sterodynamics, and ssp/landwaterstorage modules. Other workflows use a different combination of modules to get the totaled sea level rise.', echo=FALSE}
 # Plot experiment output
 ggplot() +
     geom_ribbon(data = h_slr_stats,
