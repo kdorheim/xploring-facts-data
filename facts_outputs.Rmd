@@ -1,0 +1,192 @@
+---
+title: "Comparing FACTS Outputs"
+author: "Ciara Donegan"
+date: "2024-09-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = file.path("data","OUTPUTS"))
+library(tidyverse)
+library(ggplot2)
+library(ncdf4)
+
+# Set up functions
+extract_slr <- function(filepath) {
+    nc_file <- nc_open(filepath)
+    nc_slr <- ncvar_get(nc_file,"sea_level_change")
+    nc_years <- ncvar_get(nc_file,"years")
+    nc_samples <- ncvar_get(nc_file,"samples")
+    nc_close(nc_file)
+    
+    # Convert to long format
+    colnames(nc_slr) <- nc_samples
+    nc_slr_df <- as.data.frame(nc_slr)
+    nc_slr_df$year <- nc_years
+    
+    nc_slr_long <- nc_slr_df %>%
+        pivot_longer(
+            cols = -year,
+            names_to = "sample",
+            values_to = "value"
+        )
+    
+    return(nc_slr_long)
+}
+```
+
+## FACTS Outputs
+
+This document compares the outputs of various FACTS experiments, with the original climate input from the FaIR simple climate model and with added input from Hector.
+
+```{r coupling.ssp585, echo=FALSE}
+# hector coupling.ssp585 output -- total sea level rise, workflow wf1f
+hector.coupling.ssp585.path <- file.path("hector_results","coupling.ssp585","coupling.ssp585.total.workflow.wf1f.global.nc")
+h_slr_long <- extract_slr(hector.coupling.ssp585.path)
+
+# Get max, min, and mean value at each date
+h_slr_stats <- h_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+
+# fair coupling.ssp585 output -- total sea level rise, workflow wf1f
+fair.coupling.ssp585.path <- file.path("fair_results","coupling.ssp585","coupling.ssp585.total.workflow.wf1f.global.nc")
+f_slr_long <- extract_slr(fair.coupling.ssp585.path)
+
+# Get max, min, and mean value at each date
+f_slr_stats <- f_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+```
+
+```{r fig.cap = 'Figure 1. The coupling.ssp585 experiment, plotted with 2000 climate input samples from FaIR. The experiment uses every available module to simulate sea level rise, and uses seven different workflows to obtain different estimates of the totaled rise from each module. This is the global sea level change output as calculated by workflow w1f1, which uses the FittedISMIP/GrIS, larmip/AIS, ipccar5/glaciers, tlm/sterodynamics, and ssp/landwaterstorage modules. Other workflows use a different combination of modules to get the totaled sea level rise.', echo=FALSE}
+# Plot experiment output
+ggplot() +
+    geom_ribbon(data = h_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="#00BFC4", fill="#00BFC4",linetype=0,alpha=0.2) +
+    geom_line(data = h_slr_stats, aes(x=year,y=mean,color="Hector")) +
+    geom_ribbon(data = f_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="#F8766D", fill="#F8766D",linetype=0,alpha=0.2) +
+    geom_line(data = f_slr_stats, aes(x=year,y=mean, color="FaIR")) +
+    labs(title = "coupling.ssp585 experiment: total sea level change from workflow w1f1",
+         x = "Year",
+         y = "Sea Level Change (mm)",
+         color = "Model") +
+    scale_color_manual(values=c("#F8766D","#00BFC4")) +
+    theme_minimal()
+```
+
+```{r fittedismip.ssp585, echo=FALSE}
+# hector fittedismip.ssp585 output -- total sea level rise
+hector.fittedismip.ssp585 <- file.path("hector_results","fittedismip.ssp585","fittedismip.ssp585.GrIS1f.FittedISMIP.GrIS_GIS_globalsl.nc")
+h_slr_long <- extract_slr(hector.fittedismip.ssp585)
+
+# Get max, min, and mean value at each date
+h_slr_stats <- h_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+
+# fittedismip.ssp585 output with FaIR data -- total sea level rise
+fittedismip.ssp585.path <- file.path("fair_results","fittedismip.ssp585","2000.samp","fittedismip.ssp585.GrIS1f.FittedISMIP.GrIS_GIS_globalsl.nc")
+f_slr_long <- extract_slr(fittedismip.ssp585.path)
+
+# Get max, min, and mean value at each date
+f_slr_stats <- f_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+
+```
+
+```{r fig.cap = 'Figure 2. The fittedismip.ssp585 experiment, plotted with 2000 climate input samples from FaIR and Hector. The experiment emulates 21 models that participated in ISMIP6, projecting each of their contributions to global sea level rise. While the means of the results from the two models are similar, the results using FaIR range much higher than those from Hector.', echo=FALSE}
+# Plot experiment output
+ggplot() +
+    geom_ribbon(data = h_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="#00BFC4", fill="#00BFC4",linetype=0,alpha=0.2) +
+    geom_line(data = h_slr_stats, aes(x=year,y=mean,color="Hector")) +
+    geom_ribbon(data = f_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="#F8766D", fill="#F8766D",linetype=0,alpha=0.2) +
+    geom_line(data = f_slr_stats, aes(x=year,y=mean, color="FaIR")) +
+    labs(title = "fittedismip.ssp585 experiment: total sea level change",
+         x = "Year",
+         y = "Sea Level Change (mm)",
+         color = "Model") +
+    scale_color_manual(values=c("#F8766D","#00BFC4")) +
+    theme_minimal()
+```
+
+```{r larmip.ipccar6.ssp585, echo=FALSE}
+# larmip.ipccar6.ssp585 output with FaIR data -- total sea level rise
+larmip.ipccar6.ssp585.path <- file.path("fair_results","larmip.ipccar6.ssp585","larmip.ipccar6.ssp585.larmip.larmip.AIS_globalsl.nc")
+f_slr_long <- extract_slr(larmip.ipccar6.ssp585.path)
+
+# Get max, min, and mean value at each date
+f_slr_stats <- f_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+
+```
+
+```{r fig.cap = 'Figure 3. The larmip.ipccar6.ssp585 experiment. This experiment does not use SCM input from FaIR (or Hector) and is adapted from Levermann et al. (2020). It simulates Antarctic Ice Sheet melt.', echo=FALSE}
+# Plot experiment output
+ggplot() +
+    geom_ribbon(data = f_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="#F8766D", fill="#F8766D",linetype=0,alpha=0.2) +
+    geom_line(data = f_slr_stats, aes(x=year,y=mean), color="#F8766D") +
+    labs(title = "larmip.ipccar6.ssp585 experiment: total sea level change",
+         x = "Year",
+         y = "Sea Level Change (mm)") +
+    theme_minimal()
+```
+
+```{r tlm.global, echo=FALSE}
+# hector.tlm.global output -- total sea level rise
+hector.tlm.global.path <- file.path("hector_results","hector.tlm.global","hector.tlm.global.ocean.tlm.sterodynamics_globalsl.nc")
+h_slr_long <- extract_slr(hector.tlm.global.path)
+
+# Get max, min, and mean value at each date
+h_slr_stats <- h_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+
+# fair tlm.global output
+fair.tlm.global.path <- file.path("fair_results","tlm.global","fair.tlm.global.ocean.tlm.sterodynamics_globalsl.nc")
+f_slr_long <- extract_slr(fair.tlm.global.path)
+
+# Get max, min, and mean value at each date
+f_slr_stats <- f_slr_long %>%
+    group_by(year) %>%
+    summarize(max = max(value),
+              min = min(value),
+              mean = mean(value))
+
+```
+
+```{r fig.cap = 'Figure 4. The tlm.global experiment, plotted with 2000 climate input samples from both FaIR and Hector. The experiment simulates thermosteric sea level rise (sea level change due to temperature change) by using a two-layer model of the forcing-temperature coupling. Using the tlm/sterodynamics module alone to estimate sea level rise, Hector predicts a range of values that is slightly greater than the results using FaIR input.', echo=FALSE}
+# Plot experiment output
+ggplot() +
+    geom_ribbon(data = h_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="#00BFC4", fill="#00BFC4",linetype=0,alpha=0.2) +
+    geom_line(data = h_slr_stats, aes(x=year,y=mean,color="Hector")) +
+    labs(title = "tlm.global experiment: total sea level change",
+         x = "Year",
+         y = "Sea Level Change (mm)") +
+    geom_ribbon(data = f_slr_stats,
+                aes(x=year, ymin=min, ymax=max), color="#F8766D", fill="#F8766D",linetype=0,alpha=0.2) +
+    geom_line(data = f_slr_stats, aes(x=year,y=mean,color="FaIR")) +
+    labs(color="Model") +
+    scale_color_manual(values=c("#F8766D","#00BFC4")) +
+    theme_minimal()
+```
